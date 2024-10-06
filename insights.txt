@@ -1,0 +1,7 @@
+10/06/2024 
+After the first step micrograd I tired to test and I got really bad result. I didn't why and I tried to find 
+solution and rewrite the , copied Karpathy's code but still I couldn't find solution. And I asked Chat GPT😐 
+and I found solution. The problem was learning rate was high(I used small data). 
+
+Conclusion : I really understand learning rate how much importand for nn. 
+
