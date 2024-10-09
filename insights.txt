@@ -5,3 +5,5 @@ and I found solution. The problem was learning rate was high(I used small data).
 
 Conclusion : I really understand learning rate how much importand for nn. 
 
+10/8 - 10/09/2024
+While two days I learned  about loss functions and optimizers. These was good ecpirence for me . 

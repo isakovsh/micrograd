@@ -1,4 +1,5 @@
 import math
+
 class Value:
     """ stores a single scalar value and its gradient """
 
@@ -50,10 +51,23 @@ class Value:
         out._backward = _backward
 
         return out
+    
     def tanh(self):
         out = Value(math.tanh(self.data),(self,),"tanh")
         def _backward():
             self.backward = (1-out**2) * out.grad
+        out.backward = _backward
+        return out
+    
+    def log(self):
+        if self.data <= 0:
+            self.data = 1e-17 #Not great but temporary solution to having values of 0.0
+        out = Value(math.log(self.data), (self,))
+
+        def _backward():
+            self.grad += (1.0 / self.data) * out.grad
+            self._backward()
+
         out.backward = _backward
         return out
 
