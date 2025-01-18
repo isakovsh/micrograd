@@ -1,4 +1,5 @@
 import math 
+import random
 
 class Value:
     def __init__(self,data,_children=()):
@@ -24,10 +25,11 @@ class Value:
         out = Value(self.data * other.data ,(self,other))
 
         def _backward():
-            self.grad += out.grad * other.value 
-            other.grad += out.grad * self.value
+            self.grad += out.grad * other.data 
+            other.grad += out.grad * self.data
 
         out._backward = _backward
+        return out
     
     def __pow__(self,other):
         assert isinstance(other, (int, float)), "only supporting int/float powers for now"
@@ -37,19 +39,22 @@ class Value:
             self.grad += (other * self.data**(other -1 ) * out.grad) 
 
         out._backward = _backward
+        
+        return out
 
     def relu(self):
-        out = Value(0 if self.data < 0 else self.data, (self,), 'ReLU')
+        out = Value(max(0,self.data))
         def _backward():
-            self.grad += (out.data > 0) * out.grad
+            self.grad += (1.0 if out.data > 0 else 0.0) * out.grad
+            
         out._backward = _backward
         return out
     
     def tanh(self):
-        out = Value(math.tanh(self.data),(self,),"tanh")
+        out = Value(math.tanh(self.data),(self,))
         def _backward():
-            self.backward = (1-out**2) * out.grad
-        out.backward = _backward
+            self.grad += (1-out.data**2) * out.grad
+        out._backward = _backward
         return out
     
     def log(self):
@@ -61,6 +66,7 @@ class Value:
             self.grad += (1.0 / self.data) * out.grad
             self._backward()
         out.backward = _backward
+        
         return out
 
     def backward(self):
@@ -94,5 +100,46 @@ class Value:
         return self * other**-1
     def __rtruediv__(self, other): # other / self
         return other * self**-1
-    def __repr__(self) -> str:
-        return self.__str__()
+        
+    def __repr__(self):
+        return f"Value(data={self.data}, grad={self.grad})"
+
+
+class Neuron:
+
+    def __init__(self,nin):
+        self.w = [Value(random.gauss(0, math.sqrt(2 / nin))) for _ in range(nin)]
+        self.b = Value(random.uniform(-1,1))
+    
+    def __call__(self,X):
+        out = sum((wi*Xi for wi, Xi in zip(self.w,X)),self.b)
+        return out.tanh()
+    
+    def parametrs(self):
+        return self.w + [self.b]
+
+class Layer:
+    
+    def __init__(self,nin,nout):
+        self.neurons = [Neuron(nin) for _ in range(nout)]
+
+    def __call__(self,X):
+        outs = [n(X) for n in self.neurons]
+        return outs[0] if len(outs)==1 else outs 
+    
+    def parametrs(self):
+        return [p for neroun in self.neurons for p in neroun.parametrs()]
+
+class MLP:
+
+    def __init__(self, nin,nouts):
+        sz = [nin] + nouts 
+        self.layers = [Layer(sz[i],sz[i+1]) for i in range(len(nouts))]
+        
+    def __call__(self,X):
+        for layer in self.layers:
+            X = layer(X)
+        return X
+
+    def parametrs(self):
+        return [p for layer in self.layers for p in layer.parametrs()]
